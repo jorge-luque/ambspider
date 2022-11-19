@@ -1,11 +1,15 @@
 import requests
 import json
+import time
+from datetime import datetime
 from repository import ExchangeRepository
 import config
 
 if __name__ == "__main__":
 
     url_source = "https://mercados.ambito.com/"
+    delay_seconds = 5 * 60
+    max_retries = 10
 
     url_map = {
         "dolar_turista": f"{url_source}/dolarturista/variacion",
@@ -26,7 +30,18 @@ if __name__ == "__main__":
 
     exchange_repository = ExchangeRepository()
 
-    for currency, url in url_map.items():
-        variation = requests.get(url).json()
-        variation["currency"] = currency
-        exchange_repository.save(variation)
+    retries = 0
+    while (retries < max_retries):
+        for currency, url in url_map.items():
+            response = requests.get(url)
+            if (response.status_code != 200):
+                retries = retries + 1
+                time.sleep(retries * retries)
+                break
+            else:
+                retries = 0
+            variation = response.json()
+            variation["currency"] = currency
+            variation["timestamp"] = datetime.timestamp(datetime.now())
+            exchange_repository.save(variation)
+        time.sleep(delay_seconds)
