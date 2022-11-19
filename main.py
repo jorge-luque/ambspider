@@ -1,15 +1,16 @@
 import requests
 import json
 import time
+import os
 from datetime import datetime
 from repository import ExchangeRepository
 import config
 
 if __name__ == "__main__":
-
+    print("Running ambspider...")
     url_source = "https://mercados.ambito.com/"
-    delay_seconds = 5 * 60
-    max_retries = 10
+    delay_seconds = int(os.environ.get('DELAY_SECONDS', 5 * 60))
+    max_retries = int(os.environ.get('MAX_RETRIES', 10))
 
     url_map = {
         "dolar_turista": f"{url_source}/dolarturista/variacion",
@@ -30,12 +31,13 @@ if __name__ == "__main__":
 
     exchange_repository = ExchangeRepository()
 
+    total_iterations = 0
     retries = 0
     while (retries < max_retries):
         for currency, url in url_map.items():
             response = requests.get(url)
             if (response.status_code != 200):
-                retries = retries + 1
+                retries += 1
                 time.sleep(retries * retries)
                 break
             else:
@@ -44,4 +46,8 @@ if __name__ == "__main__":
             variation["currency"] = currency
             variation["timestamp"] = datetime.timestamp(datetime.now())
             exchange_repository.save(variation)
+            print("Document saved")
+            print(variation)
+        total_iterations += 1
+        print(f"Iteration {total_iterations} completed")
         time.sleep(delay_seconds)

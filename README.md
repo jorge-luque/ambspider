@@ -32,3 +32,11 @@ I.e.
 }
 ```
 
+# Run program
+```sh
+python main.pu
+```
+
+You may want to configure some environment variables:
+- DELAY_SECONDS (default: 30000 seconds - 5 minutes)
+- MAX_RETRIES (default: 10)
